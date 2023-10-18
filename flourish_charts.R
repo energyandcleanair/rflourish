@@ -5,7 +5,7 @@ ChromoteSession$public_fields$default_timeout <- 60
 save_screenshot <- function(id, br, filename, width, height) {
   # Use the embedded chart directly. This automatically sizes to the window.
   br$Page$navigate(
-    paste(sep = "", "https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
+    paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
   )
   br$Page$loadEventFired()
 
