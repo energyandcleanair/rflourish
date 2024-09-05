@@ -3,10 +3,10 @@ library(chromote)
 ChromoteSession$public_fields$default_timeout <- 60
 
 save_screenshot <- function(id, br, filename, width, height) {
+  url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
+  log_info(glue("Fetching chart at url: {url}"))
   # Use the embedded chart directly. This automatically sizes to the window.
-  br$Page$navigate(
-    paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
-  )
+  br$Page$navigate(url)
   br$Page$loadEventFired()
 
   # As it resizes to the window, we can set the width and height that we want.
