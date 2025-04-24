@@ -1,5 +1,3 @@
-library(chromote)
-
 save_screenshot <- function(id, br, filename, width, height, scale) {
   url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
   log_info(glue("Fetching chart at url: {url}"))
@@ -22,7 +20,27 @@ save_screenshot <- function(id, br, filename, width, height, scale) {
   writeBin(jsonlite::base64_dec(image_data$data), filename)
 }
 
-collect_charts <- function(urls, output_dir, force_rebuild = FALSE) {
+#' Collect charts from Flourish.
+#' @param chart_defs A vector of chart definitions, each a list containing:
+#'  - id: The Flourish chart ID
+#' - filename: The output filename
+#' - width: The width of the chart
+#' - height: The height of the chart
+#' - scale: The scale factor for the chart
+#' @param output_dir The directory to save the charts to
+#' @return NULL
+#' @export
+#' @examples
+#' \dontrun{
+#' collect_charts(
+#'   chart_defs = list(
+#'     list(id = "123456", filename = "chart1.png", width = 800, height = 600, scale = 2),
+#'     list(id = "789012", filename = "chart2.png", width = 800, height = 600, scale = 2)
+#'   ),
+#'   "output_dir"
+#' )
+#' }
+collect_charts <- function(chart_defs, output_dir) {
   set_chrome_args(
     c(
       default_chrome_args(),
@@ -32,7 +50,7 @@ collect_charts <- function(urls, output_dir, force_rebuild = FALSE) {
   br <- ChromoteSession$new(width = 4000, height = 4000)
   br$default_timeout <- 120
 
-  lapply(urls, function(x) {
+  lapply(chart_defs, function(x) {
     id <- x[["id"]]
     file <- x[["filename"]]
     width <- strtoi(x[["width"]])
@@ -41,16 +59,14 @@ collect_charts <- function(urls, output_dir, force_rebuild = FALSE) {
 
     filename <- paste(output_dir, "/", file, sep = "")
 
-    if (force_rebuild == TRUE | !file.exists(filename)) {
-      save_screenshot(
-        id = id,
-        br = br,
-        width = width / scale,
-        height = height / scale,
-        scale = scale,
-        filename = filename
-      )
-    }
+    save_screenshot(
+      id = id,
+      br = br,
+      width = width / scale,
+      height = height / scale,
+      scale = scale,
+      filename = filename
+    )
   })
 
   br$close()
