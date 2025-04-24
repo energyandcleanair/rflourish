@@ -13,22 +13,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install R
+        uses: actions/setup-python@v3
+      - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: '4.3'
-
-      - name: Install pre-commit
-        run: pip install pre-commit
-
-      - name: Run pre-commit hooks
-        run: pre-commit run --all-files
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
     
   checks:
     runs-on: ubuntu-latest
