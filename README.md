@@ -58,7 +58,6 @@ chart_defs <- list(
 collect_charts(chart_defs, "output_dir")
 ```
 
-
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request if you'd like to contribute.

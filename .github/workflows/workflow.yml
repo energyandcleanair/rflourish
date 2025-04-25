@@ -48,3 +48,8 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           error-on: '"error"'
+      - name: Run integration tests only
+        run: |
+          Rscript -e 'devtools::test(filter = "integration")'
+        env:
+          RUN_INTEGRATION_TESTS: true

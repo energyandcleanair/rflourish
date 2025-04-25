@@ -14,8 +14,10 @@ Imports:
     jsonlite,
     logger
 Suggests:
+    devtools,
     precommit,
     roxygen2,
     testthat (>= 3.0.0),
-    mockery
+    mockery,
+    png
 Config/testthat/edition: 3
