@@ -59,6 +59,11 @@ collect_charts <- function(chart_defs, output_dir) {
       height = height / scale,
       scale = scale
     )
+
+    if (!is.null(result$error)) {
+      return(result)
+    }
+
     writeBin(result$chart_image, filename)
 
     return(
@@ -83,7 +88,14 @@ get_chart <- function(id, br, width, height, scale) {
   url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
   log_info(glue("Fetching chart at url: {url}"))
 
-  navigate_to_chart(br, url)
+  result <- navigate_to_chart(br, url)
+  if (result$status != navigation_status$SUCCESS) {
+    return(list(
+      chart_id = id,
+      error = "Chart does not exist or is not public"
+    ))
+  }
+
   resize_chart(br, width, height, scale)
   chart_as_bytes <- take_screenshot(br)
   updated_at <- extract_updated_at(br)
@@ -97,7 +109,22 @@ get_chart <- function(id, br, width, height, scale) {
 
 navigate_to_chart <- function(br, url) {
   br$Page$navigate(url)
+  # Get page title
+  page_title_result <- br$Runtime$evaluate("document.title")
+
+  page_title <- page_title_result[[1]]$value
+
+  if (page_title == "403 Forbidden") {
+    return(list(
+      status = navigation_status$FAILURE
+    ))
+  }
+
   br$Page$loadEventFired()
+
+  return(list(
+    status = navigation_status$SUCCESS
+  ))
 }
 
 resize_chart <- function(br, width, height, scale) {
@@ -125,3 +152,8 @@ extract_updated_at <- function(br) {
   updated_at <- date_results[[1]]$value
   return(updated_at)
 }
+
+navigation_status <- list(
+  SUCCESS = "success",
+  FAILURE = "failure"
+)

@@ -4,6 +4,8 @@ library(mockery)
 actual_date <- "2025-01-01T00:00:00Z"
 date_evaluation_result <- list(list(value = actual_date))
 
+page_title_result <- list(list(value = "My Chart Title"))
+
 test_that("collect_charts saves screenshot correctly", {
   encoded_base64 <- jsonlite::base64_enc(charToRaw("test"))
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
@@ -18,7 +20,7 @@ test_that("collect_charts saves screenshot correctly", {
       setDeviceMetricsOverride = mock()
     ),
     Runtime = list(
-      evaluate = mock(NULL, date_evaluation_result)
+      evaluate = mock(page_title_result, NULL, date_evaluation_result)
     ),
     default_timeout = NULL,
     close = mock()
@@ -63,7 +65,7 @@ test_that("collect_charts returns correct values", {
       setDeviceMetricsOverride = mock()
     ),
     Runtime = list(
-      evaluate = mock(NULL, date_evaluation_result)
+      evaluate = mock(page_title_result, NULL, date_evaluation_result)
     ),
     default_timeout = NULL,
     close = mock()
@@ -99,12 +101,19 @@ test_that("collect_charts returns correct values", {
 
 test_that("collect_charts uses the browser correctly", {
   call_log <- c()
-  create_logged_mock <- function(call_name, return_value = NULL) {
+  create_logged_mock <- function(call_name, ...) {
+    return_index <- 1
+    return_values <- list(...)
     mock(
       {
         call_log <<- c(call_log, call_name)
-        if (!is.null(return_value)) {
-          return(return_value)
+        if (length(return_values) > 0) {
+          this_value <- return_values[[return_index]]
+          return_index <- return_index + 1
+          if (return_index > length(return_values)) {
+            return_index <- 1
+          }
+          return(this_value)
         }
         return(invisible())
       },
@@ -125,7 +134,7 @@ test_that("collect_charts uses the browser correctly", {
       setDeviceMetricsOverride = create_logged_mock("setDeviceMetricsOverride")
     ),
     Runtime = list(
-      evaluate = create_logged_mock("evaluate")
+      evaluate = create_logged_mock("evaluate", page_title_result, NULL, date_evaluation_result)
     ),
     default_timeout = NULL,
     close = create_logged_mock("close")
@@ -156,6 +165,7 @@ test_that("collect_charts uses the browser correctly", {
     call_log,
     c(
       "navigate",
+      "evaluate",
       "loadEventFired",
       "setDeviceMetricsOverride",
       "evaluate",
@@ -171,11 +181,15 @@ test_that("collect_charts uses the browser correctly", {
   )
   expect_args(
     mock_br$Runtime$evaluate, 1,
+    "document.title"
+  )
+  expect_args(
+    mock_br$Runtime$evaluate, 2,
     "window.dispatchEvent(new Event('resize'))",
     timeout_ = 120 * 1000
   )
   expect_args(
-    mock_br$Runtime$evaluate, 2,
+    mock_br$Runtime$evaluate, 3,
     "window.template.data.data.timestamps.last_updated.toISOString()",
     timeout_ = 1000
   )
@@ -201,7 +215,7 @@ test_that("collect_charts saves multiple correctly", {
       setDeviceMetricsOverride = mock()
     ),
     Runtime = list(
-      evaluate = mock(NULL, date_evaluation_result, cycle = TRUE)
+      evaluate = mock(page_title_result, NULL, date_evaluation_result, cycle = TRUE)
     ),
     default_timeout = NULL,
     close = mock()
@@ -252,4 +266,38 @@ test_that("collect_charts throws error for missing arguments", {
     collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir"),
     "Missing required arguments: id, filename, width, height, scale"
   )
+})
+
+test_that("collect_charts handles non-existent charts gracefully", {
+  mock_br <- list(
+    Page = list(
+      navigate = mock(),
+      loadEventFired = mock()
+    ),
+    Runtime = list(
+      evaluate = mock(list(list(value = "403 Forbidden")))
+    ),
+    default_timeout = NULL,
+    close = mock()
+  )
+  stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
+
+  # Define a chart definition for a non-existent chart
+  chart_defs <- list(
+    list(
+      id = "nonexistent",
+      filename = "nonexistent_chart.png",
+      width = 800,
+      height = 600,
+      scale = 2
+    )
+  )
+
+  # Call the function
+  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+
+  # Verify the result contains an error
+  result <- results[[1]]
+  expect_equal(result$chart_id, "nonexistent")
+  expect_equal(result$error, "Chart does not exist or is not public")
 })
