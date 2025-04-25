@@ -10,37 +10,30 @@ RFlourish is an R package designed to take snapshots of published Flourish chart
 
 ## Installation
 
-### System Dependencies
+This depends on a variety of system libraries to run. We recommend using
+`pak` to install the package to handle the installation of system dependencies.
 
-Before installing RFlourish, ensure that the following system dependencies are installed:
-
-- **Google Chrome or Chromium**: Required for rendering the Flourish charts.
-  - On Debian/Ubuntu:
-    ```bash
-    sudo apt install google-chrome-stable
-    ```
-  - On macOS (using Homebrew):
-    ```bash
-    brew install --cask google-chrome
-    ```
-  - On Windows: Download and install from [Google Chrome's website](https://www.google.com/chrome/).
-
-### Using `remotes`
+If you don't want `pak` to install the system dependencies, you can run the
+following to list the required dependencies:
 ```r
-# Install the remotes package if not already installed
-install.packages("remotes")
-
-# Install RFlourish from GitHub
-remotes::install_github("energyandcleanair/rflourish")
+pak::sysreqs_check_installed()
 ```
 
 ### Using `pak`
-```r
-# Install the pak package if not already installed
-install.packages("pak")
 
+To install the library and all its required R and system dependencies, run the
+following:
+```r
 # Install RFlourish from GitHub
 pak::pkg_install("energyandcleanair/rflourish")
+```
+
+### Using `remotes`
+
+To install the library and its required R dependencies, run the following:
+```r
+# Install RFlourish from GitHub
+remotes::install_github("energyandcleanair/rflourish")
 ```
 
 ## Usage
