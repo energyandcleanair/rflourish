@@ -6,6 +6,7 @@
 #' - height: The height of the chart
 #' - scale: The scale factor for the chart
 #' @param output_dir The directory to save the charts to
+#' @param error_on_missing_chart Whether to throw an error if any chart is missing or inaccessible.
 #' @return NULL
 #' @export
 #' @examples
@@ -18,7 +19,7 @@
 #'   "output_dir"
 #' )
 #' }
-collect_charts <- function(chart_defs, output_dir) {
+collect_charts <- function(chart_defs, output_dir, error_on_missing_chart = TRUE) {
   set_chrome_args(
     c(
       default_chrome_args(),
@@ -77,9 +78,15 @@ collect_charts <- function(chart_defs, output_dir) {
 
   br$close()
 
-  return(
-    chart_results
-  )
+  if (error_on_missing_chart) {
+    missing_charts <- Filter(function(res) !is.null(res$error), chart_results)
+    if (length(missing_charts) > 0) {
+      error_summary <- paste(sapply(missing_charts, function(x) x$chart_id), collapse = ", ")
+      stop(glue("Some charts could not be fetched: {error_summary}"))
+    }
+  }
+
+  return(chart_results)
 }
 
 

@@ -268,7 +268,7 @@ test_that("collect_charts throws error for missing arguments", {
   )
 })
 
-test_that("collect_charts handles non-existent charts gracefully", {
+test_that("collect_charts throws error when error_on_missing_chart is TRUE", {
   mock_br <- list(
     Page = list(
       navigate = mock(),
@@ -282,7 +282,6 @@ test_that("collect_charts handles non-existent charts gracefully", {
   )
   stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
 
-  # Define a chart definition for a non-existent chart
   chart_defs <- list(
     list(
       id = "nonexistent",
@@ -293,10 +292,46 @@ test_that("collect_charts handles non-existent charts gracefully", {
     )
   )
 
-  # Call the function
-  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+  expect_error(
+    collect_charts(
+      chart_defs = chart_defs,
+      output_dir = "mock_output_dir",
+      error_on_missing_chart = TRUE
+    ),
+    "Some charts could not be fetched: nonexistent"
+  )
+})
 
-  # Verify the result contains an error
+test_that("collect_charts does not throw error when error_on_missing_chart is FALSE", {
+  mock_br <- list(
+    Page = list(
+      navigate = mock(),
+      loadEventFired = mock()
+    ),
+    Runtime = list(
+      evaluate = mock(list(list(value = "403 Forbidden")))
+    ),
+    default_timeout = NULL,
+    close = mock()
+  )
+  stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
+
+  chart_defs <- list(
+    list(
+      id = "nonexistent",
+      filename = "nonexistent_chart.png",
+      width = 800,
+      height = 600,
+      scale = 2
+    )
+  )
+
+  results <- collect_charts(
+    chart_defs = chart_defs,
+    output_dir = "mock_output_dir",
+    error_on_missing_chart = FALSE
+  )
+
   result <- results[[1]]
   expect_equal(result$chart_id, "nonexistent")
   expect_equal(result$error, "Chart does not exist or is not public")

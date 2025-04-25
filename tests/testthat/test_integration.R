@@ -30,7 +30,7 @@ test_that("Able to download Flourish chart with ID 22847056", {
   expect_equal(results[[1]]$updated_at, as.Date("2025-04-25T10:54:15.942Z"))
 })
 
-test_that("Non existant Flourish chart returns error object (but does not stop)", {
+test_that("Non existant Flourish chart returns error object", {
   skip_if_not(
     Sys.getenv("RUN_INTEGRATION_TESTS") == "true"
   )
@@ -41,7 +41,7 @@ test_that("Non existant Flourish chart returns error object (but does not stop)"
     list(id = "x1234", filename = chart_name, width = 800, height = 600, scale = 2)
   )
   output_dir <- tempdir()
-  results <- expect_no_error(collect_charts(chart_defs, output_dir))
+  results <- expect_no_error(collect_charts(chart_defs, output_dir, error_on_missing_chart = FALSE))
   expect_false(file.exists(file.path(output_dir, chart_name)))
 
   expect_equal(results[[1]]$chart_id, "x1234")

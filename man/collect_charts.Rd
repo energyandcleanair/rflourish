@@ -4,7 +4,7 @@
 \alias{collect_charts}
 \title{Collect charts from Flourish.}
 \usage{
-collect_charts(chart_defs, output_dir)
+collect_charts(chart_defs, output_dir, error_on_missing_chart = TRUE)
 }
 \arguments{
 \item{chart_defs}{A list of chart definitions, each a list containing:
@@ -17,6 +17,8 @@ collect_charts(chart_defs, output_dir)
 }}
 
 \item{output_dir}{The directory to save the charts to}
+
+\item{error_on_missing_chart}{Whether to throw an error if any chart is missing or inaccessible.}
 }
 \description{
 Collect charts from Flourish.
