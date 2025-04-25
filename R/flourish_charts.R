@@ -1,38 +1,3 @@
-get_chart <- function(id, br, width, height, scale) {
-  url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
-  log_info(glue("Fetching chart at url: {url}"))
-  # Use the embedded chart directly. This automatically sizes to the window.
-  br$Page$navigate(url)
-  br$Page$loadEventFired()
-
-  # As it resizes to the window, we can set the width and height that we want.
-  br$Emulation$setDeviceMetricsOverride(
-    width = width, height = height, scale = 1, deviceScaleFactor = scale, mobile = TRUE
-  )
-
-  # But setting the device metrics doesn't trigger a resize event - we need
-  # to trigger it manually otherwise the charts will look odd.
-  br$Runtime$evaluate("window.dispatchEvent(new Event('resize'))", timeout_ = 120 * 1000)
-  Sys.sleep(2)
-
-  screenshot_result <- br$Page$captureScreenshot(format = "png")
-  as_bytes <- jsonlite::base64_dec(screenshot_result$data)
-
-  date_results <- br$Runtime$evaluate(
-    "window.template.data.data.timestamps.last_updated.toISOString()",
-    timeout_ = 1000
-  )
-  updated_at <- date_results[[1]]$value
-
-  result <- list(
-    chart_id = id,
-    chart_image = as_bytes,
-    updated_at = as.Date(updated_at)
-  )
-
-  return(result)
-}
-
 #' Collect charts from Flourish.
 #' @param chart_defs A list of chart definitions, each a list containing:
 #' - id: The Flourish chart ID
@@ -110,4 +75,53 @@ collect_charts <- function(chart_defs, output_dir) {
   return(
     chart_results
   )
+}
+
+
+get_chart <- function(id, br, width, height, scale) {
+  # Use the embedded chart directly. This automatically sizes to the window.
+  url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
+  log_info(glue("Fetching chart at url: {url}"))
+
+  navigate_to_chart(br, url)
+  resize_chart(br, width, height, scale)
+  chart_as_bytes <- take_screenshot(br)
+  updated_at <- extract_updated_at(br)
+
+  return(list(
+    chart_id = id,
+    chart_image = chart_as_bytes,
+    updated_at = as.Date(updated_at)
+  ))
+}
+
+navigate_to_chart <- function(br, url) {
+  br$Page$navigate(url)
+  br$Page$loadEventFired()
+}
+
+resize_chart <- function(br, width, height, scale) {
+  # As it resizes to the window, we can set the width and height that we want.
+  br$Emulation$setDeviceMetricsOverride(
+    width = width, height = height, scale = 1, deviceScaleFactor = scale, mobile = TRUE
+  )
+
+  # But setting the device metrics doesn't trigger a resize event - we need
+  # to trigger it manually otherwise the charts will look odd.
+  br$Runtime$evaluate("window.dispatchEvent(new Event('resize'))", timeout_ = 120 * 1000)
+  Sys.sleep(2)
+}
+
+take_screenshot <- function(br) {
+  screenshot_result <- br$Page$captureScreenshot(format = "png")
+  as_bytes <- jsonlite::base64_dec(screenshot_result$data)
+}
+
+extract_updated_at <- function(br) {
+  date_results <- br$Runtime$evaluate(
+    "window.template.data.data.timestamps.last_updated.toISOString()",
+    timeout_ = 1000
+  )
+  updated_at <- date_results[[1]]$value
+  return(updated_at)
 }
