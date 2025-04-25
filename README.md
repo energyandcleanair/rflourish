@@ -1,6 +1,11 @@
 # RFlourish
 
-RFlourish is an R package designed to take snapshots of published Flourish charts. It provides an easy-to-use interface for automating the process of capturing high-quality images of your visualizations.
+RFlourish is an R package designed to take snapshots of published Flourish charts. It provides an
+easy-to-use interface for automating the process of capturing high-quality images of your
+visualizations.
+
+It uses a headless Google Chrome browser to access the published Flourish chart and exports the
+rendered chart.
 
 ## Features
 
