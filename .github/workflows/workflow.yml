@@ -50,8 +50,7 @@ jobs:
           error-on: '"error"'
       - uses: nick-fields/retry@v3
         with:
-          max-attempts: 3
-          delay: 10
+          max_attempts: 3
           timeout_minutes: 2
           command: |
             Rscript -e 'devtools::test(filter = "integration")'
