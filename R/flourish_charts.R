@@ -52,6 +52,19 @@ collect_charts <- function(chart_defs, output_dir) {
   br$default_timeout <- 120
 
   lapply(chart_defs, function(chart_def) {
+    if (!is.list(chart_def)) {
+      stop("chart_defs must be a list of lists")
+    }
+
+    required_args <- c("id", "filename", "width", "height", "scale")
+    actual_args <- names(chart_def)
+    if (!all(required_args %in% names(chart_def))) {
+      joined_missing_args <- paste(setdiff(required_args, actual_args), collapse = ", ")
+      stop(glue("Missing required arguments: {joined_missing_args}"))
+    }
+  })
+
+  lapply(chart_defs, function(chart_def) {
     id <- chart_def[["id"]]
     file <- chart_def[["filename"]]
     width <- strtoi(chart_def[["width"]])

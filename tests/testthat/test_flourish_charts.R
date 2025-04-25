@@ -178,3 +178,18 @@ test_that("collect_charts saves multiple correctly", {
   expect_args(mock_write_bin, 1, decoded_base64_1, "mock_output_dir/chart1.png")
   expect_args(mock_write_bin, 2, decoded_base64_2, "mock_output_dir/chart2.png")
 })
+
+test_that("collect_charts throws error for missing arguments", {
+  # Define a chart definition with missing arguments
+  chart_defs <- list(
+    list(
+      # Missing all arguments
+    )
+  )
+
+  # Expect an error when calling the function
+  expect_error(
+    collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir"),
+    "Missing required arguments: id, filename, width, height, scale"
+  )
+})
