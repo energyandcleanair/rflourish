@@ -62,8 +62,7 @@ collect_charts(chart_defs, "output_dir")
 
 Contributions are welcome! Please open an issue or submit a pull request if you'd like to contribute.
 
-
-### Development Setup
+### Developing the library
 
 To set up RFlourish for development, follow these steps:
 
@@ -83,11 +82,21 @@ To set up RFlourish for development, follow these steps:
    devtools::load_all(".")
    ```
 
-4. Make the changes you want
+Once you have made changes, you can check it passes quality and testing:
 
-4. Run checks to ensure everything is working:
+1. Run checks to ensure everything is working:
    ```r
    devtools::check()
+   ```
+
+2. Make sure the integration tests succeed.
+   ```
+   RUN_INTEGRATION_TESTS=true Rscript -e 'devtools::test(filter = "integration")'
+   ```
+
+3. Run the pre-commit hooks (as defined below):
+   ```
+   pre-commit run --all-files
    ```
 
 ### Pre-commit Hooks
@@ -109,7 +118,6 @@ This project uses pre-commit hooks to ensure code quality and consistency. To se
    pre-commit run --all-files
    ```
 
-Make sure to run the hooks before submitting a pull request to catch any issues early.
 
 ## License
 
