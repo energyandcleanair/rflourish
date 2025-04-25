@@ -1,4 +1,4 @@
-save_screenshot <- function(id, br, filename, width, height, scale) {
+get_screenshot <- function(id, br, width, height, scale) {
   url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
   log_info(glue("Fetching chart at url: {url}"))
   # Use the embedded chart directly. This automatically sizes to the window.
@@ -15,14 +15,15 @@ save_screenshot <- function(id, br, filename, width, height, scale) {
   br$Runtime$evaluate("window.dispatchEvent(new Event('resize'))", timeout_ = 120 * 1000)
   Sys.sleep(2)
 
-  # Now we write the image out.
-  image_data <- br$Page$captureScreenshot(format = "png")
-  writeBin(jsonlite::base64_dec(image_data$data), filename)
+  screenshot_result <- br$Page$captureScreenshot(format = "png")
+  as_bytes <- jsonlite::base64_dec(screenshot_result$data)
+
+  return(as_bytes)
 }
 
 #' Collect charts from Flourish.
-#' @param chart_defs A vector of chart definitions, each a list containing:
-#'  - id: The Flourish chart ID
+#' @param chart_defs A list of chart definitions, each a list containing:
+#' - id: The Flourish chart ID
 #' - filename: The output filename
 #' - width: The width of the chart
 #' - height: The height of the chart
@@ -50,23 +51,25 @@ collect_charts <- function(chart_defs, output_dir) {
   br <- ChromoteSession$new(width = 4000, height = 4000)
   br$default_timeout <- 120
 
-  lapply(chart_defs, function(x) {
-    id <- x[["id"]]
-    file <- x[["filename"]]
-    width <- strtoi(x[["width"]])
-    height <- strtoi(x[["height"]])
-    scale <- strtoi(x[["scale"]])
+  lapply(chart_defs, function(chart_def) {
+    id <- chart_def[["id"]]
+    file <- chart_def[["filename"]]
+    width <- strtoi(chart_def[["width"]])
+    height <- strtoi(chart_def[["height"]])
+    scale <- strtoi(chart_def[["scale"]])
 
     filename <- paste(output_dir, "/", file, sep = "")
 
-    save_screenshot(
+    message(glue("Saving chart {id} to {filename}"))
+
+    screenshot <- get_screenshot(
       id = id,
       br = br,
       width = width / scale,
       height = height / scale,
-      scale = scale,
-      filename = filename
+      scale = scale
     )
+    writeBin(screenshot, filename)
   })
 
   br$close()

@@ -7,7 +7,7 @@
 collect_charts(chart_defs, output_dir)
 }
 \arguments{
-\item{chart_defs}{A vector of chart definitions, each a list containing:
+\item{chart_defs}{A list of chart definitions, each a list containing:
 \itemize{
 \item id: The Flourish chart ID
 \item filename: The output filename

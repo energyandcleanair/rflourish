@@ -1,6 +1,7 @@
 aut
 Centre
 chromote
+Config
 cre
 CREA
 devtools
@@ -21,3 +22,4 @@ RoxygenNote
 Rushwood
 Snapshotting
 sublicense
+testthat
