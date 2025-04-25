@@ -1,6 +1,9 @@
 library(testthat)
 library(mockery)
 
+actual_date <- "2025-01-01T00:00:00Z"
+date_evaluation_result <- list(list(value = actual_date))
+
 test_that("collect_charts saves screenshot correctly", {
   encoded_base64 <- jsonlite::base64_enc(charToRaw("test"))
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
@@ -15,7 +18,7 @@ test_that("collect_charts saves screenshot correctly", {
       setDeviceMetricsOverride = mock()
     ),
     Runtime = list(
-      evaluate = mock()
+      evaluate = mock(NULL, date_evaluation_result)
     ),
     default_timeout = NULL,
     close = mock()
@@ -25,7 +28,7 @@ test_that("collect_charts saves screenshot correctly", {
   mock_sleep <- mock()
   stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
   stub(collect_charts, "writeBin", mock_write_bin, depth = 2)
-  stub(get_screenshot, "Sys.sleep", mock_sleep, depth = 2)
+  stub(get_chart, "Sys.sleep", mock_sleep, depth = 2)
 
   # Define a single chart definition
   chart_defs <- list(
@@ -46,16 +49,67 @@ test_that("collect_charts saves screenshot correctly", {
 })
 
 
+test_that("collect_charts returns correct values", {
+  encoded_base64 <- jsonlite::base64_enc(charToRaw("test"))
+  decoded_base64 <- jsonlite::base64_dec(encoded_base64)
+
+  mock_br <- list(
+    Page = list(
+      navigate = mock(),
+      loadEventFired = mock(),
+      captureScreenshot = mock(list(data = encoded_base64))
+    ),
+    Emulation = list(
+      setDeviceMetricsOverride = mock()
+    ),
+    Runtime = list(
+      evaluate = mock(NULL, date_evaluation_result)
+    ),
+    default_timeout = NULL,
+    close = mock()
+  )
+  # Mock writeBin and Sys.sleep
+  mock_write_bin <- mock()
+  mock_sleep <- mock()
+  stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
+  stub(collect_charts, "writeBin", mock_write_bin, depth = 2)
+  stub(get_chart, "Sys.sleep", mock_sleep, depth = 2)
+
+  # Define a single chart definition
+  chart_defs <- list(
+    list(
+      id = "123456",
+      filename = "chart1.png",
+      width = 800,
+      height = 600,
+      scale = 2
+    )
+  )
+
+  # Call the function
+  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+
+  # Check arguments passed to mocked methods
+  result <- results[[1]]
+  expect_equal(result$chart_id, "123456")
+  expect_equal(result$filepath, "mock_output_dir/chart1.png")
+  expect_equal(result$updated_at, as.Date(actual_date))
+})
+
+
 test_that("collect_charts uses the browser correctly", {
   call_log <- c()
   create_logged_mock <- function(call_name, return_value = NULL) {
-    mock({
-      call_log <<- c(call_log, call_name)
-      if (!is.null(return_value)) {
-        return(return_value)
-      }
-      return(invisible())
-    })
+    mock(
+      {
+        call_log <<- c(call_log, call_name)
+        if (!is.null(return_value)) {
+          return(return_value)
+        }
+        return(invisible())
+      },
+      cycle = TRUE
+    )
   }
 
   mock_br <- list(
@@ -81,7 +135,7 @@ test_that("collect_charts uses the browser correctly", {
   mock_sleep <- mock()
   stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
   stub(collect_charts, "writeBin", mock_write_bin, depth = 2)
-  stub(get_screenshot, "Sys.sleep", mock_sleep, depth = 2)
+  stub(get_chart, "Sys.sleep", mock_sleep, depth = 2)
 
   # Define a single chart definition
   chart_defs <- list(
@@ -106,6 +160,7 @@ test_that("collect_charts uses the browser correctly", {
       "setDeviceMetricsOverride",
       "evaluate",
       "captureScreenshot",
+      "evaluate",
       "close"
     )
   )
@@ -118,6 +173,11 @@ test_that("collect_charts uses the browser correctly", {
     mock_br$Runtime$evaluate, 1,
     "window.dispatchEvent(new Event('resize'))",
     timeout_ = 120 * 1000
+  )
+  expect_args(
+    mock_br$Runtime$evaluate, 2,
+    "window.template.data.data.timestamps.last_updated.toISOString()",
+    timeout_ = 1000
   )
 })
 
@@ -141,7 +201,7 @@ test_that("collect_charts saves multiple correctly", {
       setDeviceMetricsOverride = mock()
     ),
     Runtime = list(
-      evaluate = mock()
+      evaluate = mock(NULL, date_evaluation_result, cycle = TRUE)
     ),
     default_timeout = NULL,
     close = mock()
@@ -151,7 +211,7 @@ test_that("collect_charts saves multiple correctly", {
   mock_sleep <- mock()
   stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
   stub(collect_charts, "writeBin", mock_write_bin, depth = 2)
-  stub(get_screenshot, "Sys.sleep", mock_sleep, depth = 2)
+  stub(get_chart, "Sys.sleep", mock_sleep, depth = 2)
 
   # Define a single chart definition
   chart_defs <- list(

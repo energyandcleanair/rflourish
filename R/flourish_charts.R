@@ -1,4 +1,4 @@
-get_screenshot <- function(id, br, width, height, scale) {
+get_chart <- function(id, br, width, height, scale) {
   url <- paste0("https://flo.uri.sh/visualisation/", id, "/embed?auto=1")
   log_info(glue("Fetching chart at url: {url}"))
   # Use the embedded chart directly. This automatically sizes to the window.
@@ -18,7 +18,19 @@ get_screenshot <- function(id, br, width, height, scale) {
   screenshot_result <- br$Page$captureScreenshot(format = "png")
   as_bytes <- jsonlite::base64_dec(screenshot_result$data)
 
-  return(as_bytes)
+  date_results <- br$Runtime$evaluate(
+    "window.template.data.data.timestamps.last_updated.toISOString()",
+    timeout_ = 1000
+  )
+  updated_at <- date_results[[1]]$value
+
+  result <- list(
+    chart_id = id,
+    chart_image = as_bytes,
+    updated_at = as.Date(updated_at)
+  )
+
+  return(result)
 }
 
 #' Collect charts from Flourish.
@@ -64,7 +76,7 @@ collect_charts <- function(chart_defs, output_dir) {
     }
   })
 
-  lapply(chart_defs, function(chart_def) {
+  chart_results <- lapply(chart_defs, function(chart_def) {
     id <- chart_def[["id"]]
     file <- chart_def[["filename"]]
     width <- strtoi(chart_def[["width"]])
@@ -75,15 +87,27 @@ collect_charts <- function(chart_defs, output_dir) {
 
     message(glue("Saving chart {id} to {filename}"))
 
-    screenshot <- get_screenshot(
+    result <- get_chart(
       id = id,
       br = br,
       width = width / scale,
       height = height / scale,
       scale = scale
     )
-    writeBin(screenshot, filename)
+    writeBin(result$chart_image, filename)
+
+    return(
+      list(
+        chart_id = result$chart_id,
+        filepath = filename,
+        updated_at = result$updated_at
+      )
+    )
   })
 
   br$close()
+
+  return(
+    chart_results
+  )
 }

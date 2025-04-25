@@ -9,7 +9,7 @@ test_that("Integration test for ID 22847056", {
   )
   output_dir <- tempdir()
 
-  expect_no_error(collect_charts(chart_defs, output_dir))
+  results <- expect_no_error(collect_charts(chart_defs, output_dir))
 
   expect_true(file.exists(file.path(output_dir, "chart1.png")))
 
@@ -23,4 +23,8 @@ test_that("Integration test for ID 22847056", {
   expected_img_path <- system.file("testdata", "expected_chart.png", package = "rflourish")
   expected_img <- png::readPNG(expected_img_path, info = TRUE)
   expect_true(all(abs(img_info - expected_img) < 0.1))
+
+  expect_equal(results[[1]]$chart_id, "22847056")
+  expect_equal(results[[1]]$filepath, file.path(output_dir, "chart1.png"))
+  expect_equal(results[[1]]$updated_at, as.Date("2025-04-25T10:54:15.942Z"))
 })
