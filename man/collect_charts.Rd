@@ -7,7 +7,8 @@
 collect_charts(chart_defs, output_dir, error_on_missing_chart = TRUE)
 }
 \arguments{
-\item{chart_defs}{A list of chart definitions, each a list containing:
+\item{chart_defs}{A data frame (with the following columns) or a list of chart definitions (each
+a list with the following named values):
 \itemize{
 \item id: The Flourish chart ID
 \item filename: The output filename
@@ -29,6 +30,16 @@ collect_charts(
   chart_defs = list(
     list(id = "123456", filename = "chart1.png", width = 800, height = 600, scale = 2),
     list(id = "789012", filename = "chart2.png", width = 800, height = 600, scale = 2)
+  ),
+  "output_dir"
+)
+collect_charts(
+  chart_defs = data.frame(
+    id = c("123456", "789012"),
+    filename = c("chart1.png", "chart2.png"),
+    width = c(800, 800),
+    height = c(600, 600),
+    scale = c(2, 2)
   ),
   "output_dir"
 )

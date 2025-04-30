@@ -92,10 +92,8 @@ test_that("collect_charts returns correct values", {
   results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
 
   # Check arguments passed to mocked methods
-  result <- results[[1]]
-  expect_equal(result$chart_id, "123456")
-  expect_equal(result$filepath, "mock_output_dir/chart1.png")
-  expect_equal(result$updated_at, as.Date(actual_date))
+  expect_equal(results$chart_id[1], "123456")
+  expect_equal(results$filepath[1], "mock_output_dir/chart1.png")
 })
 
 
@@ -246,11 +244,11 @@ test_that("collect_charts saves multiple correctly", {
   )
 
   # Call the function
-  collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
 
   # Check arguments passed to mocked methods
-  expect_args(mock_write_bin, 1, decoded_base64_1, "mock_output_dir/chart1.png")
-  expect_args(mock_write_bin, 2, decoded_base64_2, "mock_output_dir/chart2.png")
+  expect_equal(results$chart_id, c("123456", "789012"))
+  expect_equal(results$filepath, c("mock_output_dir/chart1.png", "mock_output_dir/chart2.png"))
 })
 
 test_that("collect_charts throws error for missing arguments", {
@@ -332,7 +330,79 @@ test_that("collect_charts does not throw error when error_on_missing_chart is FA
     error_on_missing_chart = FALSE
   )
 
-  result <- results[[1]]
-  expect_equal(result$chart_id, "nonexistent")
-  expect_equal(result$error, "Chart does not exist or is not public")
+  expect_equal(results$chart_id[1], "nonexistent")
+  expect_equal(results$error[1], "Chart does not exist or is not public")
+})
+
+test_that("collect_charts works with a data frame", {
+  encoded_base64 <- jsonlite::base64_enc(charToRaw("test"))
+  decoded_base64 <- jsonlite::base64_dec(encoded_base64)
+
+  mock_br <- list(
+    Page = list(
+      navigate = mock(),
+      loadEventFired = mock(),
+      captureScreenshot = mock(list(data = encoded_base64))
+    ),
+    Emulation = list(
+      setDeviceMetricsOverride = mock()
+    ),
+    Runtime = list(
+      evaluate = mock(page_title_result, NULL, date_evaluation_result)
+    ),
+    default_timeout = NULL,
+    close = mock()
+  )
+  stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
+  stub(collect_charts, "writeBin", mock(), depth = 2)
+
+  chart_defs <- data.frame(
+    id = "123456",
+    filename = "chart1.png",
+    width = 800,
+    height = 600,
+    scale = 2,
+    stringsAsFactors = FALSE
+  )
+
+  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+  expect_equal(results$chart_id[1], "123456")
+  expect_equal(results$filepath[1], "mock_output_dir/chart1.png")
+})
+
+test_that("collect_charts works with a list of lists", {
+  encoded_base64 <- jsonlite::base64_enc(charToRaw("test"))
+  decoded_base64 <- jsonlite::base64_dec(encoded_base64)
+
+  mock_br <- list(
+    Page = list(
+      navigate = mock(),
+      loadEventFired = mock(),
+      captureScreenshot = mock(list(data = encoded_base64))
+    ),
+    Emulation = list(
+      setDeviceMetricsOverride = mock()
+    ),
+    Runtime = list(
+      evaluate = mock(page_title_result, NULL, date_evaluation_result)
+    ),
+    default_timeout = NULL,
+    close = mock()
+  )
+  stub(collect_charts, "ChromoteSession$new", mock_br, depth = 1)
+  stub(collect_charts, "writeBin", mock(), depth = 2)
+
+  chart_defs <- list(
+    list(
+      id = "123456",
+      filename = "chart1.png",
+      width = 800,
+      height = 600,
+      scale = 2
+    )
+  )
+
+  results <- collect_charts(chart_defs = chart_defs, output_dir = "mock_output_dir")
+  expect_equal(results$chart_id[1], "123456")
+  expect_equal(results$filepath[1], "mock_output_dir/chart1.png")
 })

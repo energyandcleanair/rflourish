@@ -1,6 +1,6 @@
 Package: rflourish
 Title: Snapshotting Published Flourish Charts
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
     person("Panda", "Rushwood", , "panda@energyandcleanair.org", role = c("aut", "cre"))
 Description: Takes snapshots of flourish charts.

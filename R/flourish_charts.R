@@ -1,5 +1,6 @@
 #' Collect charts from Flourish.
-#' @param chart_defs A list of chart definitions, each a list containing:
+#' @param chart_defs A data frame (with the following columns) or a list of chart definitions (each
+#' a list with the following named values):
 #' - id: The Flourish chart ID
 #' - filename: The output filename
 #' - width: The width of the chart
@@ -18,36 +19,42 @@
 #'   ),
 #'   "output_dir"
 #' )
+#' collect_charts(
+#'   chart_defs = data.frame(
+#'     id = c("123456", "789012"),
+#'     filename = c("chart1.png", "chart2.png"),
+#'     width = c(800, 800),
+#'     height = c(600, 600),
+#'     scale = c(2, 2)
+#'   ),
+#'   "output_dir"
+#' )
 #' }
 collect_charts <- function(chart_defs, output_dir, error_on_missing_chart = TRUE) {
-  set_chrome_args(
-    c(
-      default_chrome_args(),
-      "--force-prefers-reduced-motion"
-    )
-  )
+  # Convert list of lists to data frame if necessary
+  if (is.list(chart_defs) && !is.data.frame(chart_defs)) {
+    chart_defs <- do.call(rbind, lapply(chart_defs, as.data.frame))
+  }
+
+  if (!is.data.frame(chart_defs)) {
+    stop("chart_defs must be a data frame or a list of lists")
+  }
+
+  required_args <- c("id", "filename", "width", "height", "scale")
+  missing_args <- setdiff(required_args, names(chart_defs))
+  if (length(missing_args) > 0) {
+    stop(glue("Missing required arguments: {paste(missing_args, collapse = ', ')}"))
+  }
+
   br <- ChromoteSession$new(width = 4000, height = 4000)
   br$default_timeout <- 120
 
-  lapply(chart_defs, function(chart_def) {
-    if (!is.list(chart_def)) {
-      stop("chart_defs must be a list of lists")
-    }
-
-    required_args <- c("id", "filename", "width", "height", "scale")
-    actual_args <- names(chart_def)
-    if (!all(required_args %in% names(chart_def))) {
-      joined_missing_args <- paste(setdiff(required_args, actual_args), collapse = ", ")
-      stop(glue("Missing required arguments: {joined_missing_args}"))
-    }
-  })
-
-  chart_results <- lapply(chart_defs, function(chart_def) {
+  chart_results <- apply(chart_defs, 1, function(chart_def) {
     id <- chart_def[["id"]]
     file <- chart_def[["filename"]]
-    width <- strtoi(chart_def[["width"]])
-    height <- strtoi(chart_def[["height"]])
-    scale <- strtoi(chart_def[["scale"]])
+    width <- as.integer(chart_def[["width"]])
+    height <- as.integer(chart_def[["height"]])
+    scale <- as.integer(chart_def[["scale"]])
 
     filename <- paste(output_dir, "/", file, sep = "")
 
@@ -62,31 +69,39 @@ collect_charts <- function(chart_defs, output_dir, error_on_missing_chart = TRUE
     )
 
     if (!is.null(result$error)) {
-      return(result)
+      return(data.frame(
+        chart_id = id,
+        filepath = NA,
+        updated_at = NA,
+        error = result$error,
+        stringsAsFactors = FALSE
+      ))
     }
 
     writeBin(result$chart_image, filename)
 
-    return(
-      list(
-        chart_id = result$chart_id,
-        filepath = filename,
-        updated_at = result$updated_at
-      )
-    )
+    return(data.frame(
+      chart_id = result$chart_id,
+      filepath = filename,
+      updated_at = result$updated_at,
+      error = NA,
+      stringsAsFactors = FALSE
+    ))
   })
 
   br$close()
 
+  chart_results_df <- do.call(rbind, chart_results)
+
   if (error_on_missing_chart) {
-    missing_charts <- Filter(function(res) !is.null(res$error), chart_results)
-    if (length(missing_charts) > 0) {
-      error_summary <- paste(sapply(missing_charts, function(x) x$chart_id), collapse = ", ")
+    missing_charts <- subset(chart_results_df, !is.na(error))
+    if (nrow(missing_charts) > 0) {
+      error_summary <- paste(missing_charts$chart_id, collapse = ", ")
       stop(glue("Some charts could not be fetched: {error_summary}"))
     }
   }
 
-  return(chart_results)
+  return(chart_results_df)
 }
 
 
