@@ -46,7 +46,7 @@ collect_charts <- function(chart_defs, output_dir, error_on_missing_chart = TRUE
     stop(glue("Missing required arguments: {paste(missing_args, collapse = ', ')}"))
   }
 
-  br <- ChromoteSession$new(width = 4000, height = 4000)
+  br <- ChromoteSession$new(width = 1000, height = 800)
   br$default_timeout <- 120
 
   chart_results <- apply(chart_defs, 1, function(chart_def) {
