@@ -130,7 +130,7 @@ get_chart <- function(id, br, width, height, scale) {
 }
 
 navigate_to_chart <- function(br, url) {
-  br$Page$navigate(url)
+  br$go_to(url)
   # Get page title
   page_title_result <- br$Runtime$evaluate("document.title")
 
@@ -141,8 +141,6 @@ navigate_to_chart <- function(br, url) {
       status = navigation_status$FAILURE
     ))
   }
-
-  br$Page$loadEventFired()
 
   return(list(
     status = navigation_status$SUCCESS

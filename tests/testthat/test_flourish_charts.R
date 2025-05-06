@@ -11,9 +11,8 @@ test_that("collect_charts saves screenshot correctly", {
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
 
   mock_br <- list(
+    go_to = mock(),
     Page = list(
-      navigate = mock(),
-      loadEventFired = mock(),
       captureScreenshot = mock(list(data = encoded_base64))
     ),
     Emulation = list(
@@ -56,9 +55,8 @@ test_that("collect_charts returns correct values", {
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
 
   mock_br <- list(
+    go_to = mock(),
     Page = list(
-      navigate = mock(),
-      loadEventFired = mock(),
       captureScreenshot = mock(list(data = encoded_base64))
     ),
     Emulation = list(
@@ -120,9 +118,8 @@ test_that("collect_charts uses the browser correctly", {
   }
 
   mock_br <- list(
+    go_to = create_logged_mock("go_to"),
     Page = list(
-      navigate = create_logged_mock("navigate"),
-      loadEventFired = create_logged_mock("loadEventFired"),
       captureScreenshot = create_logged_mock(
         "captureScreenshot",
         list(data = jsonlite::base64_enc(charToRaw("test")))
@@ -162,9 +159,8 @@ test_that("collect_charts uses the browser correctly", {
   expect_equal(
     call_log,
     c(
-      "navigate",
+      "go_to",
       "evaluate",
-      "loadEventFired",
       "setDeviceMetricsOverride",
       "evaluate",
       "captureScreenshot",
@@ -172,7 +168,7 @@ test_that("collect_charts uses the browser correctly", {
       "close"
     )
   )
-  expect_args(mock_br$Page$navigate, 1, "https://flo.uri.sh/visualisation/123456/embed?auto=1")
+  expect_args(mock_br$go_to, 1, "https://flo.uri.sh/visualisation/123456/embed?auto=1")
   expect_args(
     mock_br$Emulation$setDeviceMetricsOverride, 1,
     width = 400, height = 300, scale = 1, deviceScaleFactor = 2, mobile = TRUE
@@ -201,9 +197,8 @@ test_that("collect_charts saves multiple correctly", {
   decoded_base64_2 <- jsonlite::base64_dec(encoded_base64_2)
 
   mock_br <- list(
+    go_to = mock(),
     Page = list(
-      navigate = mock(),
-      loadEventFired = mock(),
       captureScreenshot = mock(
         list(data = encoded_base64_1),
         list(data = encoded_base64_2)
@@ -268,10 +263,8 @@ test_that("collect_charts throws error for missing arguments", {
 
 test_that("collect_charts throws error when error_on_missing_chart is TRUE", {
   mock_br <- list(
-    Page = list(
-      navigate = mock(),
-      loadEventFired = mock()
-    ),
+    go_to = mock(),
+    Page = list(),
     Runtime = list(
       evaluate = mock(list(list(value = "403 Forbidden")))
     ),
@@ -302,10 +295,8 @@ test_that("collect_charts throws error when error_on_missing_chart is TRUE", {
 
 test_that("collect_charts does not throw error when error_on_missing_chart is FALSE", {
   mock_br <- list(
-    Page = list(
-      navigate = mock(),
-      loadEventFired = mock()
-    ),
+    go_to = mock(),
+    Page = list(),
     Runtime = list(
       evaluate = mock(list(list(value = "403 Forbidden")))
     ),
@@ -339,9 +330,8 @@ test_that("collect_charts works with a data frame", {
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
 
   mock_br <- list(
+    go_to = mock(),
     Page = list(
-      navigate = mock(),
-      loadEventFired = mock(),
       captureScreenshot = mock(list(data = encoded_base64))
     ),
     Emulation = list(
@@ -375,9 +365,8 @@ test_that("collect_charts works with a list of lists", {
   decoded_base64 <- jsonlite::base64_dec(encoded_base64)
 
   mock_br <- list(
+    go_to = mock(),
     Page = list(
-      navigate = mock(),
-      loadEventFired = mock(),
       captureScreenshot = mock(list(data = encoded_base64))
     ),
     Emulation = list(
